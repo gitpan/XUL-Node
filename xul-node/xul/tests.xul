@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<window
+	title="XUL-Node Client Unit Tests"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml"
+	onload="runTests()"
+>
+<script src="NS6lib_tests.js"></script>
+<script><![CDATA[
+
+Util_Debug.get().setEnabled(true);
+
+use("Test_Runner");
+
+function runTests() {
+	var runner = new Test_Runner();
+	runner.start("AllTests");
+}
+
+/*
+
+or if you want just a specific test:
+
+runner.start("FooPackage_BarPackage_tests_BazClass");
+
+examples:
+
+runner.start("Client_tests_ServerProxy");
+runner.start("Test_tests_AllTests");
+
+*/
+
+]]></script></window>
+
