@@ -7,7 +7,6 @@ New Widgets
 Widget Features
 
    * support multiple selection
-   * multi column list box does not show 1st column labels for some rows
    * support node disposal with XUL::Node::dispose
    * color picker will not fire events if type is set to button
    * support lazy loading of tabs, decks, list/tree data
@@ -17,9 +16,6 @@ Widget Features
    * support client-side only events, 
    * use Coro continuations for modal dialog boxes
    * add proper listenable support to node, instead of callback setting
-   * equalsize attribute will not work
-   * multiline labels in button may come out in wrong order
-   * menus with no popups may not show
    * support calling XUL methods with more than one param
 
 Server Features

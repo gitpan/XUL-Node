@@ -49,6 +49,7 @@ lib/XUL/Node/State.pm
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
+META.yml
 README
 t/all_tests.t
 t/lib/XUL/Node/tests/ChangeManager.pm
@@ -72,6 +73,7 @@ xul-node/xul/index.html
 xul-node/xul/jslib/AllTests.js
 xul-node/xul/jslib/Client/Application.js
 xul-node/xul/jslib/Client/Runner.js
+xul-node/xul/jslib/Client/Runner2.js
 xul-node/xul/jslib/Client/ServerProxy.js
 xul-node/xul/jslib/Client/ServerResponse.js
 xul-node/xul/jslib/Client/tests/AllTests.js
@@ -91,4 +93,3 @@ xul-node/xul/jslib/Util/tests/AllTests.js
 xul-node/xul/jslib/Util/tests/BootStrap.js
 xul-node/xul/start.xul
 xul-node/xul/tests.xul
-META.yml                                 Module meta-data (added by MakeMaker)

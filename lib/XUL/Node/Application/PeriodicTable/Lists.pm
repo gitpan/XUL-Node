@@ -62,9 +62,7 @@ sub get_demo_box {
 				),
 			),
 		),
-		# for some reason 1st column labels are not shown for the 1st
-		# N rows, where N is is rows attribute of the listbox
-		GroupBox(FLEX, style => 'border-color: red',
+		GroupBox(FLEX,
 			Caption(label => 'with multiple columns and a scrollbar'),
 			ListBox(FLEX, rows => 5,
 				ListCols(

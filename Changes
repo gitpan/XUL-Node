@@ -1,11 +1,18 @@
 Revision history for XUL-Node
 
+0.03 Tue Jul 6 2004
+
+    - equalsize attribute now works
+    - multi column list box show 1st column labels
+    - fixed multiline labels for button
+    - menus with no popups show
+
 0.02 Fri Jun 30 2004
 
-    - Fixed some documentation errors.
-    - Sessions were commiting suicide after 3 seconds.
+    - fixed some documentation errors
+    - sessions were commiting suicide after 3 seconds
 
 0.01 Fri Jun 18 2004
 
-    - Initial version.
+    - initial version
 

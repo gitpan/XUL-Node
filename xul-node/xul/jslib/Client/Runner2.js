@@ -2,27 +2,23 @@
 Class("Client_Runner");
 Class_Singleton();
 
-_.init = function () { this.document = window.document }
+_.init =  function () {
+	this.document     = window.document;
+	this.newNodes     = {}; // nodes to add after their child has been added
+	this.lateCommands = []; // commands to run at latest possible time
+}
 
 _.run = function (response) {
-	this.resetBuffers();
-
 	var commands = response.getCommands();
 	var command;
 	for (command in commands)
 		this.runCommand(commands[command]);
-
-	var roots = this.newNodeRoots;
-	var parentId;
-	for (parentId in roots)
-		this.getNode(parentId).appendChild(roots[parentId]);
-
-	var lateCommands = this.lateCommands;
-	for (command in lateCommands) {
-		command = lateCommands[command];
+	for (command in this.lateCommands) {
+		command = this.lateCommands[command];
 		this.commandSetNode
 			(command['nodeId'], command['arg1'], command['arg2']);
 	}
+	this.lateCommands = [];
 }
 
 // commands -------------------------------------------------------------------
@@ -49,24 +45,45 @@ _.commandNewWindow = function (nodeId) {
 }
 
 _.commandNewElement = function (nodeId, tagName, parentId) { try {
-	var element = this.createElement(tagName, nodeId);
-	this.newNodes[nodeId] = element;
-
-	var parent = this.newNodes[parentId];
-	if (parent)
-		parent.appendChild(element);
-	else
-		this.newNodeRoots[parentId] = element;
-
-	// onselect does not bubble
-	if (tagName == 'listbox')
-		element.setAttribute('onselect', 'window.onselect(event)');
-	else if (tagName == 'colorpicker')
-		element.setAttribute(
-			'onselect',
-			'Client_Application.get().fireEvent_Pick({"targetId":"' +
-				element.id + '"})'
+	var element;
+	if (tagName.match(/^html_/)) {
+		tagName = tagName.replace(/^html_/, '');
+		element = this.document.createElementNS
+			('http://www.w3.org/1999/xhtml', tagName);
+	} else {
+		element = this.document.createElementNS(
+			'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
+			tagName
 		);
+	}
+	element.id = nodeId;
+
+	// hack: mozilla will not draw items in menulist if menupopup is
+	// added to menulist AFTER the menulist has been added to its parent.
+	// ditto for menu
+	if (tagName == 'menulist' || tagName == 'menu') {
+		element.parentId = parentId;
+		this.newNodes[nodeId] = element;
+	} else if (tagName == 'menupopup' && !this.isNodeInDocument(parentId)) {
+		var parent = this.newNodes[parentId];
+		var grandParent = this.getNode(parent.parentId);
+		parent.appendChild(element);
+		grandParent.appendChild(parent);
+		parent.removeAttribute(parentId);
+		delete this.newNodes[parentId];
+	} else {
+		// the normal case
+		var parent = this.getNode(parentId);
+		parent.appendChild(element);
+		// onselect does not bubble
+		if (tagName == 'listbox')
+			element.setAttribute('onselect', 'window.onselect(event)');
+		else if (tagName == 'colorpicker')
+			element.setAttribute('onselect',
+				'Client_Application.get().fireEvent_Pick({"targetId":"' +
+				element.id + '"})'
+			);
+	}
 } catch (e) {
 	Throw(e,
 		'Cannot create new node: [' + nodeId +
@@ -75,9 +92,9 @@ _.commandNewElement = function (nodeId, tagName, parentId) { try {
 }}
 
 _.commandSetNode = function (nodeId, key, value) { try {
-	var element = this.newNodes[nodeId];
-
-	if (!element) element = this.getNode(nodeId);
+	var element =
+			this.newNodes[nodeId]? this.newNodes[nodeId]: this.getNode(nodeId);
+	if (!element) Throw('Cannot find node on parent: [' + nodeId + ']');
 
 	if (key == 'textNode') {
 		element.appendChild(this.document.createTextNode(value));
@@ -115,6 +132,9 @@ _.commandSetNode = function (nodeId, key, value) { try {
 
 // private --------------------------------------------------------------------
 
+_.isNodeInDocument = function (nodeId)
+	{ return this._getNode(nodeId)? true: false }
+
 _.getNode = function (nodeId) {
 	var node = this._getNode(nodeId);
 	if (!node) Throw("cannot find node by Id: " + nodeId);
@@ -127,26 +147,6 @@ _._getNode = function (nodeId) {
 		this.document.getElementById(nodeId);
 	return node;
 }	
-
-_.createElement = function (tagName, nodeId) {
-	var element = tagName.match(/^html_/)?
-		this.document.createElementNS(
-			'http://www.w3.org/1999/xhtml',
-			tagName.replace(/^html_/, '')
-		):
-		this.document.createElementNS(
-			'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
-			tagName
-		);
-	element.id = nodeId;
-	return element;
-}
-
-_.resetBuffers = function () {
-	this.newNodeRoots = []; // top level parent nodes of those not yet added
-	this.newNodes     = []; // nodes not yet added to document
-	this.lateCommands = []; // commands to run at latest possible time
-}
 
 Client_Runner.boleanAttributes = {
 	'disabled'     : true,

@@ -181,7 +181,7 @@ sub get_demo_box {
 				),
 				# looks like a moz bug- despite the fact that DOM calls are
 				# called in the correct order, they appear in the wrong order
-				VBox(style => 'border: 1px solid red',
+				VBox(
 					Button(FLEX, ORIENT_VERTICAL,
 						Label(value => 'This'),
 						Label(value => 'is'),

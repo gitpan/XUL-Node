@@ -36,7 +36,7 @@ my $INSTALL_DIR = prompt(
 WriteMakefile(
 	NAME          => $NAME,
 	VERSION_FROM  => $MODULE,
-	ABSTRACT      => 'Perl XUL interface',
+	ABSTRACT      => 'server-side XUL for Perl',
 	AUTHOR        => 'Ran Eilam <eilara@cpan.org>',
 	dist          => {COMPRESS => 'gzip --force --best'},
 	PL_FILES      => {"$SERVER_SCRIPT.PL" => $SERVER_SCRIPT},

@@ -8,7 +8,7 @@ use XUL::Node;
 use base 'XUL::Node::Application';
 
 sub start {
-	Window(
+	Window(VBox(FILL,
 		HTML_H1(textNode => 'This is an <H1> heading.'),
 		HTML_H2(textNode => 'This is an <H2> heading.'),
 		HTML_H3(textNode => 'This is an <H3> heading.'),
@@ -20,7 +20,7 @@ sub start {
 			href     => 'http://www.mozilla.org',
 			target   => 'new_browser',
 		)),
-	)
+	))
 }
 
 1;

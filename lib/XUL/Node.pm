@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use XUL::Node::Constants;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 my @XUL_ELEMENTS = qw(
 	Window Box HBox VBox Label Button TextBox TabBox Tabs TabPanels Tab TabPanel

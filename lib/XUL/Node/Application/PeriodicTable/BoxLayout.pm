@@ -171,9 +171,8 @@ sub get_demo_box {
 				Button(label => 'stretch'),
 			),
 		),
-		# despite the correct DOM calls, cannot get equalsize to be always
-		GroupBox(ORIENT_HORIZONTAL, style => 'border-color: red',
-			Caption(label => 'equality', style => 'color: red'),
+		GroupBox(ORIENT_HORIZONTAL,
+			Caption(label => 'equality'),
 			VBox(equalsize => 'always',
 				Button(ORIENT_VERTICAL,
 					label => 'Here',

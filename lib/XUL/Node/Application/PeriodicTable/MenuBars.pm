@@ -95,7 +95,7 @@ sub get_demo_box {
 					),
 				),
 				# these dont show. why?
-				MenuBar(DIR_REVERSE, style => 'border: 1px solid red',
+				MenuBar(DIR_REVERSE,
 					Menu(label => 'Menubar'),
 					Menu(label => 'with'),
 					Menu(label => 'its'),
@@ -103,7 +103,7 @@ sub get_demo_box {
 					Spacer(FLEX),
 					Menu(label => 'here->'),
 				),
-				MenuBar(grippyhidden => 1, style => 'border: 1px solid red',
+				MenuBar(grippyhidden => 1,
 					Menu(label => 'Menubar'),
 					Menu(label => 'with'),
 					Menu(label => 'its'),
