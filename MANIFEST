@@ -33,6 +33,7 @@ lib/XUL/Node/Application/PeriodicTable/StacksAndDecks.pm
 lib/XUL/Node/Application/PeriodicTable/Tabs.pm
 lib/XUL/Node/Application/PeriodicTable/TextBoxes.pm
 lib/XUL/Node/Application/PeriodicTable/Welcome.pm
+lib/XUL/Node/Application/RemoveChildExample.pm
 lib/XUL/Node/Application/SplitterExample.pm
 lib/XUL/Node/Application/TabBoxExample.pm
 lib/XUL/Node/Application/TextBoxExample.pm
@@ -73,7 +74,6 @@ xul-node/xul/index.html
 xul-node/xul/jslib/AllTests.js
 xul-node/xul/jslib/Client/Application.js
 xul-node/xul/jslib/Client/Runner.js
-xul-node/xul/jslib/Client/Runner2.js
 xul-node/xul/jslib/Client/ServerProxy.js
 xul-node/xul/jslib/Client/ServerResponse.js
 xul-node/xul/jslib/Client/tests/AllTests.js

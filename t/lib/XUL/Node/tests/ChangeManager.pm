@@ -14,9 +14,7 @@ sub subject_class { 'XUL::Node::ChangeManager' }
 
 sub window_registration: Test {
 	my ($self, $subject) = @_;
-	my $window;
-	$subject->run_and_flush
-		(sub { $window = Window(Label(value => 'foo')) });
+	my $window = $self->make_window($subject);
 	is_deeply $subject->windows, [$window];
 }
 
@@ -31,28 +29,44 @@ sub create: Test {
 
 sub change: Test {
 	my ($self, $subject) = @_;
-	my $window = $self->is_buffer($subject);
+	my $window = $self->make_window($subject);
 	$self->is_buffer(
 		$subject,
 		['E1.set.value.bar'],
-		sub { $window->children->[0]->value('bar') },
+		sub { $window->first_child->value('bar') },
 	);
 }
 
 sub empty_flush: Test {
 	my ($self, $subject) = @_;
-	$self->is_buffer($subject);
+	$self->make_window($subject);
 	$self->is_buffer($subject, [], sub {});
 }
+
+sub remove_child: Test {
+	my ($self, $subject) = @_;
+	my $window = $self->make_window($subject);
+	my $label  = $window->first_child;
+	$self->is_buffer
+		($subject, ['E1.bye'], sub { $window->remove_child($label) });
+}
+
+# assertions and helpers ------------------------------------------------------
 
 sub is_buffer {
 	my ($self, $subject, $expected, $code) = @_;
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
-	my $window;
-	$code ||= sub { $window = Window(Label(value => 'foo')) };
-	my $actual = $subject->run_and_flush($code);
+	my ($actual, $window) = $self->make_window($subject, $code);
 	is_xul($actual, $expected) if $expected;
 	return $window;
+}
+
+sub make_window {
+	my ($self, $subject, $code) = @_;
+	my $window;
+	$code ||= sub { $window = Window(Label(value => 'foo')) };
+	my $flushed_buffer = $subject->run_and_flush($code);
+	return wantarray? ($flushed_buffer, $window): $window;
 }
 
 1;

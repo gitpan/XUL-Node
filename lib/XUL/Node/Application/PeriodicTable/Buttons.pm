@@ -97,8 +97,8 @@ sub get_demo_box {
 						Select => sub {
 							my $event = shift;
  							$labels->{menu}->value(
- 								$event->source->children->[0]->
- 									children->[$event->selectedIndex]->label
+ 								$event->source->first_child->children->
+ 									[$event->selectedIndex]->label
  							);
 						},
 					),
@@ -112,8 +112,8 @@ sub get_demo_box {
 						Select => sub {
 							my $event = shift;
 							$labels->{menu}->value(
-								$event->source->children->[0]->
-									children->[$event->selectedIndex]->label
+								$event->source->first_child->children->
+									[$event->selectedIndex]->label
 							);
 						},
 						Click => sub

@@ -44,7 +44,7 @@ WriteMakefile(
 	clean         => {FILES => "$SERVER_SCRIPT"},
 	PREREQ_PM     => {
 		POE                                  => 0.2802,
-		Aspect                               => 0.09_02,
+		Aspect                               => 0.09_03,
 		'Digest::MD5'                        => 2.3,
 		'LWP'                                => 5.75,
 		'MIME::Types'                        => 1.13,

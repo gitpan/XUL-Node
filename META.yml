@@ -1,11 +1,11 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         XUL-Node
-version:      0.03
+version:      0.04
 version_from: lib/XUL/Node.pm
 installdirs:  site
 requires:
-    Aspect:                        0.0902
+    Aspect:                        0.0903
     Digest::MD5:                   2.3
     LWP:                           5.75
     MIME::Types:                   1.13

@@ -9,14 +9,22 @@ use XUL::Node::State;
 
 # creating --------------------------------------------------------------------
 
-sub new { bless {windows => [], next_node_id => 0}, shift }
+# windows is list of all top level nodes
+# destroyed is buffer of all states scheduled for destruction on next flush
+# next_node_id is next available node ID - 1
+sub new { bless {windows => [], destroyed => [], next_node_id => 0}, shift }
 
 # public interface for sessions -----------------------------------------------
 
 sub run_and_flush {
 	my ($self, $code) = @_;
+	local $_;
 	$code->();
-	return join '', map { $self->flush_node($_) } @{$self->windows};
+	my $out =
+		(join '', map { $self->flush_node($_) } @{$self->windows}).
+		(join '', map { $_->flush } @{$self->{destroyed}});
+	$self->{destroyed} = [];
+	return $out;
 }
 
 sub destroy {
@@ -56,16 +64,23 @@ after {
 } call 'XUL::Node::set_attribute' & $Self_Flow;
 
 # when node added, set parent node state id on child node state
-after {
-	my $context = shift;
-	my $self    = $context->source->self;
-	my $parent  = $context->self;
-	my $child   = $context->params->[1];
+# when node destroyed, update state using set_destoyed
+before {
+	my $context     = shift;
+	my $self        = $context->source->self;
+	my $parent      = $context->self;
+	my $child       = $context->params->[1];
+	my $child_state = $self->node_state($child);
+	my $is_add      = $context->short_sub_name eq 'add_child';
 
-	$self->node_state($child)->set_parent_id
-		($self->node_state($parent)->get_id);
+	if ($is_add) 
+		{ $child_state->set_parent_id($self->node_state($parent)->get_id) }
+	else {
+		$child_state->set_destroyed;
+		push @{$self->{destroyed}}, $child_state;
+	}
 
-} call 'XUL::Node::add_child' & $Self_Flow;
+} (call 'XUL::Node::add_child' | call 'XUL::Node::remove_child') & $Self_Flow;
 
 # private ---------------------------------------------------------------------
 

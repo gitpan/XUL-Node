@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use XUL::Node::Constants;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 my @XUL_ELEMENTS = qw(
 	Window Box HBox VBox Label Button TextBox TabBox Tabs TabPanels Tab TabPanel
@@ -76,7 +76,28 @@ sub AUTOLOAD {
 
 sub children    { wantarray? @{shift->{children}}: shift->{children} }
 sub child_count { scalar @{shift->{children}} }
-sub add_child   { push @{shift->{children}}, pop }
+sub first_child { shift->{children}->[0] }
+
+sub add_child {
+	my ($self, $child) = @_;
+	push @{$self->{children}}, $child;
+	return $child;
+}
+
+sub remove_child {
+	my ($self, $child) = @_;
+	splice @{$self->{children}}, $self->get_child_index($child), 1;
+	$child->destroy;
+}
+
+sub get_child_index {
+	my ($self, $child) = @_;
+	my $index = 0;
+	my @children = @{$self->{children}};
+	$index++ until $index > @children || $child eq $children[$index];
+	croak 'child not in parent' unless $children[$index] eq $child;
+	return $index;
+}
 
 # event handling --------------------------------------------------------------
 
@@ -97,13 +118,15 @@ sub fire_event {
 
 # destroying ------------------------------------------------------------------
 
-# protected, used by sessions to free node memory
+# protected, used by sessions and by parent nodes to free node memory 
 # event handlers could cause reference cycles, so we free them manually
 sub destroy {
 	my $self = shift;
-	delete $self->{events};
 	$_->destroy for $self->children;
+	delete $self->{events};
 }
+
+sub is_destroyed { !shift->{events} }
 
 # testing ---------------------------------------------------------------------
 

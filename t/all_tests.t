@@ -58,9 +58,9 @@ run_tests.pl - run Rui unit tests
 =head1 SYNOPSIS
 
   # run all tests
-  perl run_tests.pl
+  perl all_tests.t
 
   # a specific test case, no need to add the tests:: part
-  perl run_tests.pl XUL::Node
+  perl all_tests.t XUL::Node
 
 =cut

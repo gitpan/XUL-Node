@@ -12,15 +12,20 @@ use base 'Test::Class';
 
 sub subject_class { 'XUL::Node::State' }
 
+sub init_subject_state {
+	my ($self, $subject) = @_;
+	$subject->set_id('E2');
+	$subject->set_parent_id('E1');
+	$subject->set_tag('Label');
+}
+
 sub create: Test {
 	my ($self, $subject) = @_;
-	$self->init_state($subject);
 	is_xul $subject->flush, ['E2.new.label.E1'];
 }
 
 sub change: Test {
 	my ($self, $subject) = @_;
-	$self->init_state($subject);
 	$subject->flush;
 	$subject->set_attribute(key1 => 'value1');
 	$subject->set_attribute(key2 => 'value2');
@@ -29,17 +34,29 @@ sub change: Test {
 
 sub flush_twice: Test {
 	my ($self, $subject) = @_;
-	$self->init_state($subject);
 	$subject->set_attribute(foo => 'bar');
 	$subject->flush;
 	is $subject->flush, '';
 }
 
-sub init_state {
+sub is_destroyed: Test(2) {
 	my ($self, $subject) = @_;
-	$subject->set_id('E2');
-	$subject->set_parent_id('E1');
-	$subject->set_tag('Label');
+	ok !$subject->is_destroyed, 'before set_destoyed';
+	$subject->set_destroyed;
+	ok $subject->is_destroyed, 'after set_destoyed';
+}
+
+sub bye_command: Test {
+	my ($self, $subject) = @_;
+	$subject->flush;
+	$subject->set_destroyed;
+	is_xul $subject->flush, ['E2.bye'];
+}
+
+sub bye_command_before_paint: Test {
+	my ($self, $subject) = @_;
+	$subject->set_destroyed;
+	is_xul $subject->flush, [];
 }
 
 1;

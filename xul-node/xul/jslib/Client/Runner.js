@@ -38,10 +38,13 @@ _.runCommand = function (command) {
 		else
 			this.commandNewElement(nodeId, arg1, arg2);
 	else
-		if (Client_Runner.lateAttributes[arg1])
-			this.lateCommands.push(command);
+		if (methodName == 'bye')
+			this.commandByeElement(nodeId);
 		else
-			this.commandSetNode(nodeId, arg1, arg2);
+			if (Client_Runner.lateAttributes[arg1])
+				this.lateCommands.push(command);
+			else
+				this.commandSetNode(nodeId, arg1, arg2);
 }
 
 _.commandNewWindow = function (nodeId) {
@@ -112,6 +115,11 @@ _.commandSetNode = function (nodeId, key, value) { try {
 		'Cannot do set on node: [' + nodeId + ', ' + key + ', ' + value + ']'
 	);
 }}
+
+_.commandByeElement = function (nodeId) {
+	var node = this.getNode(nodeId);
+	node.parentNode.removeChild(node);
+}
 
 // private --------------------------------------------------------------------
 

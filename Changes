@@ -1,5 +1,13 @@
 Revision history for XUL-Node
 
+0.04 Wed Jul 7 2004
+
+    - added remove_child method to nodes, which can now be removed from
+      the document, added RemoveChildExample and tests
+    - uses a more recent version of Aspect for an improvement to
+      Test::Class
+    - removed old copy of Runner.js
+
 0.03 Tue Jul 6 2004
 
     - equalsize attribute now works

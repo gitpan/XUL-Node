@@ -85,4 +85,22 @@ sub detach: Test {
 	is $listener_called, 0;
 }
 
+sub destroy: Test(4) {
+	my ($self, $subject) = @_;
+	my $child = $subject->Label;
+	ok !$subject->is_destroyed, 'subject exists';
+	ok !$child->is_destroyed, 'child exists';
+	$subject->destroy;
+	ok $subject->is_destroyed, 'subject destroyed';
+	ok $child->is_destroyed, 'child destroyed';
+}
+
+sub remove_child: Test(2) {
+	my ($self, $subject) = @_;
+	my $child = $subject->Label;
+	$subject->remove_child($child);
+	is $subject->child_count, 0, 'child count decreased';
+	ok $child->is_destroyed, 'child removed';
+}
+
 1;

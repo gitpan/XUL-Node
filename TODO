@@ -7,7 +7,6 @@ New Widgets
 Widget Features
 
    * support multiple selection
-   * support node disposal with XUL::Node::dispose
    * color picker will not fire events if type is set to button
    * support lazy loading of tabs, decks, list/tree data
    * support mixed content (Hello <b>world</b>)
@@ -25,6 +24,7 @@ Server Features
    * add something like Apache2 perl-script handler, so you don't have to
      implement start()
    * better cleanup required after user code exceptions
+   * performance: stop flushing all nodes for each event
    * figure out some way to throw away, on server side, widgets that
      never change or recieve events, so we can free memory
    * allow some async events
