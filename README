@@ -38,8 +38,8 @@ FEATURES
 
 PREREQUISITES
 
-   XUL-Node requires Perl 5.8.2, Firefox 0.XXX, and the following modules,
-   which can be obtained from CPAN:
+   XUL-Node requires Perl 5.8.2, Firefox 0.8 and 0.9, and the following
+   modules, which can be obtained from CPAN:
 
      Scalar::Util
      LWP

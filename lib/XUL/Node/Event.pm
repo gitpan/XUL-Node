@@ -75,11 +75,11 @@ XUL::Node::Event - a user interface event
 
   # more complex listeners
   $check_box->attach(Click => sub {
-     my $event = shift; # XUL::Node::Event object is only para
+     my $event = shift; # XUL::Node::Event object is only argument
      print
-       'source: '.   $event->source,  # source widget, a XUL::Node object
-       ', name: '.   $event->name,    # Click
-       ', checked:'. $event->checked; # Perl boolean
+       'source: '   . $event->source,  # source widget, a XUL::Node object
+       ', name: '   . $event->name,    # Click
+       ', checked: '. $event->checked; # Perl boolean
   });
 
 =head1 DESCRIPTION

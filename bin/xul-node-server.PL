@@ -51,7 +51,7 @@ xul-node-server [options]
 Options:
 
   --port   Port (default is ~~PORT~~)
-  --root   Document root (default is ~~INSTALL DIR~~)
+  --root   Document root (default is ~~INSTALL_DIR~~)
   --help   Show this message
 
 =cut

@@ -1,7 +1,7 @@
 New Widgets
 
    * add tree support
-	* add popup support
+   * add popup support
    * support more than one window
 
 Widget Features
@@ -10,7 +10,7 @@ Widget Features
    * multi column list box does not show 1st column labels for some rows
    * support node disposal with XUL::Node::dispose
    * color picker will not fire events if type is set to button
-	* support lazy loading of tabs, decks, list/tree data
+   * support lazy loading of tabs, decks, list/tree data
    * support mixed content (Hello <b>world</b>)
    * create widgets using XUL XML instead of XUL Perl API, with template
      support

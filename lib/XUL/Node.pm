@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use XUL::Node::Constants;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 my @XUL_ELEMENTS = qw(
 	Window Box HBox VBox Label Button TextBox TabBox Tabs TabPanels Tab TabPanel
@@ -158,13 +158,13 @@ XUL-Node - server-side XUL for Perl
   # attributes
   $label->value('a value');
   $label->style('color:red');
-  print $label->flex;                          # prints 3
+  print $label->flex;
 
   # compositing
   print $window->child_count;                  # prints 2
   $window->Label(value => 'another label');    # add a label to window
   $window->add_child(Label);                   # same but takes child as param
-  $button = $window->children->[1];
+  $button = $window->children->[1];            # navigate the widget tree
 
   # events
   $window->Button(Click => sub { $label->value('clicked!') });
@@ -301,7 +301,9 @@ examples. By default it will be available at:
 
 =head2 Widgets
 
-Widgets are created by calling a function or method named after their tag:
+To create a UI, you will want your C<start()> method to create a window
+with some widgets in it. Widgets are created by calling a function or
+method named after their tag:
 
   $button = Button;                           # orphan button with no label
   $box->Button;                               # another, but added to a box
@@ -315,11 +317,11 @@ show when there is a containment path between it and a window. There are
   $parent->Button(label => 'hi!');            # create and add in one shot
   Box(style => 'color:red', $label);          # add in parent constructor
 
-Widgets have attributes. These can be set in the constructor, or get/set
-through methods:
+Widgets have attributes. These can be set in the constructor, or via
+get/set methods:
 
   $button->value('a button');
-  print $button->value;
+  print $button->value;                       # prints 'a button'
 
 You can configure all attributes, event handlers, and children of a
 widget, in the constructor. There are also constants for commonly used
@@ -342,7 +344,7 @@ attributes. This allows for some nice code:
   );
 
 Check out the XUL references (L<http://www.xulplanet.com>) for
-explanation of available widget attributes.
+an explanation of available widget attributes.
 
 =head2 Events
 
@@ -489,7 +491,7 @@ changes, and record them for passing on to the client.
 The C<XUL::Node::EventManager> keeps a weak list of all widgets, so they
 can be forwarded events, as they arrive from the client.
 
-A time-to-live timer is run using C<POE>, so that session will expire
+A time-to-live timer is run using C<POE>, so that sessions will expire
 after 10 minutes of inactivity.
 
 =head2 The Client

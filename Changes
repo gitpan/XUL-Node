@@ -1,5 +1,10 @@
 Revision history for XUL-Node
 
+0.02 Fri Jun 30 2004
+
+    - Fixed some documentation errors.
+    - Sessions were commiting suicide after 3 seconds.
+
 0.01 Fri Jun 18 2004
 
     - Initial version.

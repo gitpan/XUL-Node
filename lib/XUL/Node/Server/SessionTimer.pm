@@ -7,7 +7,7 @@ use POE;
 
 use constant {
 	POE_SESSION_KEEP_ALIVE => 60 * 60 * 24,
-	USER_SESSION_TIMEOUT   => 3, #60 * 10,
+	USER_SESSION_TIMEOUT   => 60 * 10,
 };
 
 sub new {
