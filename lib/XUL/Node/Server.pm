@@ -85,6 +85,7 @@ sub handle {
 	if ($@) {
 		$content = $self->get_error_message($@, %request);
 		$code    = RC_INTERNAL_SERVER_ERROR;
+#		print STDERR "Server error:\n". $content;
 	}
 	$self->config_response($response, $content, $code);
 	return H_FINAL;

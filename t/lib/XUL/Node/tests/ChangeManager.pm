@@ -22,7 +22,7 @@ sub create: Test {
 	my ($self, $subject) = @_;
 	$self->is_buffer($subject, [qw(
 		E2.new.window.0
-		E1.new.label.E2
+		E1.new.label.E2.0
 		E1.set.value.foo
 	)]);
 }
@@ -49,6 +49,21 @@ sub remove_child: Test {
 	my $label  = $window->first_child;
 	$self->is_buffer
 		($subject, ['E1.bye'], sub { $window->remove_child($label) });
+}
+
+sub create_at_index: Test {
+	my ($self, $subject) = @_;
+	$self->is_buffer($subject, [qw(
+		E1.new.window.0
+		E4.new.label.E1.0
+		E2.new.label.E1.0
+		E3.new.label.E1.1
+	)], sub {
+		my $window = Window;
+		$window->Label;
+		$window->Label;
+		$window->add_child(Label, 0);
+	});
 }
 
 # assertions and helpers ------------------------------------------------------

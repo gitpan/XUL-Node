@@ -53,6 +53,8 @@ MANIFEST.SKIP
 META.yml
 README
 t/all_tests.t
+t/lib/Test/Class.pm
+t/lib/Test/Class/MethodInfo.pm
 t/lib/XUL/Node/tests/ChangeManager.pm
 t/lib/XUL/Node/tests/Session.pm
 t/lib/XUL/Node/tests/SessionManager.pm

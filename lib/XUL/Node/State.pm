@@ -39,8 +39,10 @@ sub as_command {
 sub make_command_new {
 	my $self = shift;
 	return '' unless $self->is_new;
-	my $parent_id = $self->get_parent_id || 0;
-	make_command($self->get_id, new => $self->get_tag, $parent_id);
+	my @args =
+		($self->get_id, new => $self->get_tag, ($self->get_parent_id || 0));
+	push(@args, $self->{index}) if exists $self->{index};
+	make_command(@args);
 }
 
 sub make_command_bye {
@@ -82,6 +84,7 @@ sub is_destroyed  { shift->{is_destroyed} }
 sub set_id        { shift->{id}           = pop             }
 sub set_tag       { shift->{tag}          = lc pop          }
 sub set_old       { shift->{is_new}       = 0               }
+sub set_index     { shift->{index}        = pop             }
 sub clear_buffer  { shift->{buffer}       = []              }
 sub set_parent_id { shift->{parent_id}    = pop             }
 sub set_destroyed { shift->{is_destroyed} = 1               }

@@ -13,11 +13,10 @@ _.testBoot = function () {
 	);
 	this.assert(
 		"boot2: " + response,
-		response.indexOf("E1.new.label.E2") != -1
+		response.indexOf("E1.new.label.E2.0") != -1
 	);
 	this.assert(
 		"boot3: " + response,
 		response.indexOf("E1.set.value.Hello World!") != -1
 	);
 }
-

@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use XUL::Node::Constants;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 my @XUL_ELEMENTS = qw(
 	Window Box HBox VBox Label Button TextBox TabBox Tabs TabPanels Tab TabPanel
@@ -55,7 +55,7 @@ sub new {
 
 sub attributes    { wantarray? %{shift->{attributes}}: shift->{attributes} }
 sub get_attribute { shift->attributes->{pop()} }
-sub set_attribute {shift->attributes->{pop()} = pop }
+sub set_attribute { $_[0]->attributes->{pop()} = pop; $_[0] }
 sub is_window     { shift->tag eq 'Window' }
 
 sub AUTOLOAD {
@@ -77,17 +77,24 @@ sub AUTOLOAD {
 sub children    { wantarray? @{shift->{children}}: shift->{children} }
 sub child_count { scalar @{shift->{children}} }
 sub first_child { shift->{children}->[0] }
+sub get_child   { shift->{children}->[pop] }
 
 sub add_child {
-	my ($self, $child) = @_;
-	push @{$self->{children}}, $child;
+	my ($self, $child, $index) = @_;
+	my $child_count = $self->child_count;
+	$index = $child_count unless defined $index;
+	croak "index out of bounds: [$index:$child_count]"
+		if ($index < 0 || $index > $child_count);
+	$self->_add_child_at_index($child, $index);
 	return $child;
 }
 
 sub remove_child {
-	my ($self, $child) = @_;
-	splice @{$self->{children}}, $self->get_child_index($child), 1;
+	my ($self, $something) = @_;
+	my ($child, $index) = $self->_compute_child_and_index($something);
+	splice @{$self->{children}}, $index, 1;
 	$child->destroy;
+	return $self;
 }
 
 sub get_child_index {
@@ -97,6 +104,21 @@ sub get_child_index {
 	$index++ until $index > @children || $child eq $children[$index];
 	croak 'child not in parent' unless $children[$index] eq $child;
 	return $index;
+}
+
+# computes child and index from child or index
+sub _compute_child_and_index {
+	my ($self, $something) = @_;
+	my $is_node = UNIVERSAL::isa($something, __PACKAGE__);
+	my $child   = $is_node? $something: $self->get_child($something);
+	my $index   = $is_node? $self->get_child_index($something): $something;
+	return wantarray? ($child, $index): $child;
+}
+
+sub _add_child_at_index {
+	my ($self, $child, $index) = @_;
+	splice @{$self->{children}}, $index, 0, $child;
+	return $child;
 }
 
 # event handling --------------------------------------------------------------
@@ -187,7 +209,8 @@ XUL-Node - server-side XUL for Perl
   print $window->child_count;                  # prints 2
   $window->Label(value => 'another label');    # add a label to window
   $window->add_child(Label);                   # same but takes child as param
-  $button = $window->children->[1];            # navigate the widget tree
+  $button = $window->get_child(1);             # navigate the widget tree
+  $window->add_child(Label, 0);                # add a child at an index
 
   # events
   $window->Button(Click => sub { $label->value('clicked!') });
@@ -196,6 +219,9 @@ XUL-Node - server-side XUL for Perl
      Select => sub { $label->value(shift->selectedIndex) },
   );
 
+  # destroying
+  $window->remove_child($button);              # remove child widget
+  $window->remove_child(1);                    # remove child by index
 
 =head1 DESCRIPTION
 
@@ -345,6 +371,13 @@ get/set methods:
 
   $button->value('a button');
   print $button->value;                       # prints 'a button'
+
+Widget can be removed from the document by calling the C<remove_child()>
+method on their parent. The only parameter is a widget, or an index of a
+widget. For example:
+
+  $box->remove_child($button);
+  $box->remove_child(0);
 
 You can configure all attributes, event handlers, and children of a
 widget, in the constructor. There are also constants for commonly used

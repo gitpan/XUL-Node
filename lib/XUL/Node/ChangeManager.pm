@@ -64,23 +64,27 @@ after {
 } call 'XUL::Node::set_attribute' & $Self_Flow;
 
 # when node added, set parent node state id on child node state
-# when node destroyed, update state using set_destoyed
 before {
 	my $context     = shift;
 	my $self        = $context->source->self;
 	my $parent      = $context->self;
 	my $child       = $context->params->[1];
+	my $index       = $context->params->[2];
 	my $child_state = $self->node_state($child);
-	my $is_add      = $context->short_sub_name eq 'add_child';
+	$child_state->set_parent_id($self->node_state($parent)->get_id);
+	$child_state->set_index($index);
+} call 'XUL::Node::_add_child_at_index' & $Self_Flow;
 
-	if ($is_add) 
-		{ $child_state->set_parent_id($self->node_state($parent)->get_id) }
-	else {
-		$child_state->set_destroyed;
-		push @{$self->{destroyed}}, $child_state;
-	}
-
-} (call 'XUL::Node::add_child' | call 'XUL::Node::remove_child') & $Self_Flow;
+# when node destroyed, update state using set_destoyed
+before {
+	my $context     = shift;
+	my $self        = $context->source->self;
+	my $parent      = $context->self;
+	my $child       = $parent->_compute_child_and_index($context->params->[1]);
+	my $child_state = $self->node_state($child);
+	$child_state->set_destroyed;
+	push @{$self->{destroyed}}, $child_state;
+} call 'XUL::Node::remove_child' & $Self_Flow;
 
 # private ---------------------------------------------------------------------
 
@@ -93,6 +97,7 @@ sub flush_node {
 
 sub node_state {
 	my ($self, $node, $state) = @_;
+	croak "not a node: [$node]" unless UNIVERSAL::isa($node, 'XUL::Node');
 	return $node->{state} unless $state;
 	$node->{state} = $state;
 }

@@ -7,31 +7,61 @@ use XUL::Node;
 
 use base 'XUL::Node::Application';
 
+use constant BUTTON_STYLE => (style => 'font-weight: bold; font-size: 17pt');
+
+# demonstrates removing widgets, and adding widgets at a specific index
+
 sub start {
-	my $i = 0;
-	my $list;
+	my $self = shift;
 	Window(
 		VBox(FILL,
 			HBox(
-				Button(label => 'add'   , Click => sub { add_item   ($list) }),
-				Button(label => 'remove', Click => sub { remove_item($list) }),
+				Button(BUTTON_STYLE, FLEX,
+					label       => '+',
+					tooltiptext => 'add item at selected index',
+					Click       => sub { $self->add },
+				),
+				my $remove_button = Button(BUTTON_STYLE, FLEX, DISABLED,
+					label       => '-',
+					tooltiptext => 'remove selected item',
+					Click       => sub { $self->remove },
+				),
 			),
-			$list = ListBox(FILL),
+			my $list = ListBox(FILL),
 		),
 	);
+	$self->{list} = $list;
+	$self->{remove_button} = $remove_button;
 }
 
-sub add_item {
-	my $list  = shift;
-	my $index = $list->child_count + 1;
-	$list->ListItem(label => "item #$index");
+sub add {
+	my $self  = shift;
+	my $list  = $self->{list};
+	my $index = $list->child_count? $list->selectedIndex + 1: 0;
+	$list->add_child(ListItem(label => rand() * 10), $index);
+	$self->{remove_button}->disabled(0);
+	$self->select_and_ensure_visible($index);
 }
 
-sub remove_item {
-	my $list = shift;
-	my $index = $list->child_count;
-	return unless $index;
-	$list->remove_child($list->children->[$index - 1]);
+sub remove {
+	my $self  = shift;
+	my $list  = $self->{list};
+	return unless $list->child_count;
+	my $index = $list->selectedIndex;
+	$list->remove_child($index);
+	unless ($list->child_count) {
+		$self->{remove_button}->disabled(1);
+		return;
+	}
+	--$index if $index;
+	$self->select_and_ensure_visible($index);
+}
+
+sub select_and_ensure_visible {
+	my ($self, $index) = @_;
+	$self->{list}->
+		selectedIndex($index)->
+		ensureIndexIsVisible($index);
 }
 
 1;

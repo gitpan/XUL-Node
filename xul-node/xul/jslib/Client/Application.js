@@ -43,8 +43,10 @@ _.fireEvent_Command = function (domEvent) {
 
 _.fireEvent_Select = function (domEvent) {
 	var source = domEvent.target;
+	var selectedIndex = source.selectedIndex;
+	if (selectedIndex == -1) return; // listbox: mozilla fires strange events
 	this.fireEvent
-		('Select', {'target': source}, {'selectedIndex': source.selectedIndex });
+		('Select', {'target': source}, {'selectedIndex': selectedIndex });
 }
 
 _.fireEvent_Pick = function (domEvent) {

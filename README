@@ -38,7 +38,7 @@ FEATURES
 
 PREREQUISITES
 
-   XUL-Node requires Perl 5.8.2, Firefox 0.8 and 0.9, and the following
+   XUL-Node requires Perl 5.8.2, Firefox 0.8 or 0.9, and the following
    modules, which can be obtained from CPAN:
 
      Scalar::Util
@@ -60,7 +60,7 @@ INSTALLATION
    modules:
 
       perl Makefile.PL
-      (...answer two questions...)
+      (...maybe answer two questions...)
       make
       make test
       make install
@@ -69,10 +69,11 @@ INSTALLATION
     documentation.
 
     During installation you can provide a port and a server root
-    directory path for the XUL-Node server when prompted.
+    directory path for the XUL-Node server when prompted, or you can
+    just accept the defaults.
 
     Several Perl modules, one script (the XUL-Node server), and a server
-    root directory will be installed.
+    root directory (to be shared by the server) will be installed.
 
     You can then run the server using the command:
 

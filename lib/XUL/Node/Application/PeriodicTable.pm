@@ -49,7 +49,7 @@ sub start {
 # lazy load the demo tabs
 sub switch_demo {
 	my ($self, $deck, $index) = @_;
-	my $demo_tabbox_parent = $deck->children->[$index];
+	my $demo_tabbox_parent = $deck->get_child($index);
 	unless ($demo_tabbox_parent->child_count) {
 		my ($name, $label) = @{($self->get_demo_panels_config)[$index]};
 		$demo_tabbox_parent->add_child($self->get_demo_tabbox($name, $label));

@@ -96,10 +96,10 @@ sub get_demo_box {
 						),
 						Select => sub {
 							my $event = shift;
- 							$labels->{menu}->value(
- 								$event->source->first_child->children->
- 									[$event->selectedIndex]->label
- 							);
+							$labels->{menu}->value(
+								$event->source->first_child->
+								get_child(event->selectedIndex)->label
+							);
 						},
 					),
 					Button(TYPE_MENU_BUTTON, FLEX, label => 'MenuButton',
@@ -112,8 +112,8 @@ sub get_demo_box {
 						Select => sub {
 							my $event = shift;
 							$labels->{menu}->value(
-								$event->source->first_child->children->
-									[$event->selectedIndex]->label
+								$event->source->first_child->
+								get_child(event->selectedIndex)->label
 							);
 						},
 						Click => sub

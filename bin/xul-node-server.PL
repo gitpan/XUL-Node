@@ -38,6 +38,8 @@ GetOptions(
 	'help'   => \$HELP,
 ) or pod2usage(2); 
 
+pod2usage(1) if $HELP;
+
 start($PORT, $ROOT);
 
 =head1 NAME

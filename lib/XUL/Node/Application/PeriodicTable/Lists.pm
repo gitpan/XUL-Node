@@ -35,7 +35,7 @@ sub get_demo_box {
 					Select => sub {
 						my $event = shift;
 						$labels->{single}->value(
-							$event->source->children->[$event->selectedIndex]->label
+							$event->source->get_child($event->selectedIndex)->label
 						);
 					},
 				),

@@ -15,7 +15,7 @@ _.run = function (response) {
 	var roots = this.newNodeRoots;
 	var parentId;
 	for (parentId in roots)
-		this.getNode(parentId).appendChild(roots[parentId]);
+		this.addElementAtIndex(this.getNode(parentId), roots[parentId]);
 
 	var lateCommands = this.lateCommands;
 	for (command in lateCommands) {
@@ -32,11 +32,12 @@ _.runCommand = function (command) {
 	var methodName = command['methodName'];
 	var arg1       = command['arg1'];
 	var arg2       = command['arg2'];
+	var arg3       = command['arg3'];
 	if (methodName == 'new')
 		if (arg1 == 'window')
 			this.commandNewWindow(nodeId);
 		else
-			this.commandNewElement(nodeId, arg1, arg2);
+			this.commandNewElement(nodeId, arg1, arg2, arg3);
 	else
 		if (methodName == 'bye')
 			this.commandByeElement(nodeId);
@@ -51,13 +52,14 @@ _.commandNewWindow = function (nodeId) {
 	this.windowId = nodeId;
 }
 
-_.commandNewElement = function (nodeId, tagName, parentId) { try {
+_.commandNewElement = function (nodeId, tagName, parentId, index) { try {
 	var element = this.createElement(tagName, nodeId);
+	element.setAttribute('_addAtIndex', index);
 	this.newNodes[nodeId] = element;
 
 	var parent = this.newNodes[parentId];
 	if (parent)
-		parent.appendChild(element);
+		this.addElementAtIndex(parent, element);
 	else
 		this.newNodeRoots[parentId] = element;
 
@@ -96,9 +98,9 @@ _.commandSetNode = function (nodeId, key, value) { try {
 	}
 	if (Client_Runner.simpleMethodAttributes[key]) {
 		if (element.tagName == 'window')
-			window[key].apply(window);
+			window[key].apply(window, [value]);
 		else
-			element[key].apply(element);
+			element[key].apply(element, [value]);
 		return;
 	}
 	if (Client_Runner.propertyAttributes[key]) {
@@ -150,6 +152,22 @@ _.createElement = function (tagName, nodeId) {
 	return element;
 }
 
+_.addElementAtIndex = function (parent, child) {
+	var index = child.getAttribute('_addAtIndex');
+	child.removeAttribute('_addAtIndex');
+	
+	if (index == null) {
+		parent.appendChild(child);
+		return;
+	}
+	var children = parent.childNodes;
+	var count    = children.length;
+	if (count == 0)
+		parent.appendChild(child);
+	else
+		parent.insertBefore(child, index == count? null: children[index]);
+}
+
 _.resetBuffers = function () {
 	this.newNodeRoots = []; // top level parent nodes of those not yet added
 	this.newNodes     = []; // nodes not yet added to document
@@ -173,7 +191,8 @@ Client_Runner.lateAttributes = {
 	'sizeToContent': true
 };
 Client_Runner.simpleMethodAttributes = {
-	'sizeToContent': true
+	'sizeToContent'       : true,
+	'ensureIndexIsVisible': true
 };
 
  

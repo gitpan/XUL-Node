@@ -24,7 +24,8 @@ _.parseCommands = function () {
 			'nodeId'    : params[0],
 			'methodName': params[1],
 			'arg1'      : params[2],
-			'arg2'      : params[3]
+			'arg2'      : params[3],
+			'arg3'      : params[4]
 		});
 	}
 	return outLines;

@@ -30,7 +30,7 @@ sub boot: Test(2) {
 		[qw(
 			E2.new.window.0
 			E2.set.sizeToContent.1
-			E1.new.label.E2
+			E1.new.label.E2.0
 			E1.set.value.Hello_World!
 		)],
 		'xul message';

@@ -1,5 +1,15 @@
 Revision history for XUL-Node
 
+0.05 Fri Aug 6 2004
+
+    - you can now add widgets at specific indexes, besides appending them
+    - added support for ListBox ensureIndexIsVisible
+    - selectedIndex on ListBox works even after init
+    - remove_child can remove nodes or indexes
+    - improved RemoveChildExample
+    - removed dependency on development version of Test::Class, now
+      includes it
+
 0.04 Wed Jul 7 2004
 
     - added remove_child method to nodes, which can now be removed from

@@ -26,6 +26,18 @@ sub add_child: Test {
 	is_deeply [$subject->children], [$child];
 }
 
+sub add_child_at_index: Test {
+	my ($self, $subject) = @_;
+	$subject->set_attribute(tag => 'Box');
+	my $child1 = $self->make_subject(tag => 'Label');
+	my $child2 = $self->make_subject(tag => 'Label');
+	my $child3 = $self->make_subject(tag => 'Label');
+	$subject->add_child($child1);
+	$subject->add_child($child2);
+	$subject->add_child($child3, 1);
+	is_deeply [$subject->children], [$child1, $child3, $child2];
+}
+
 sub create_with_children: Test {
 	my $self    = shift;
 	my $child1  = $self->make_subject(tag => 'Label');
