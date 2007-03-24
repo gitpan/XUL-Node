@@ -26,6 +26,9 @@ __END__
 use strict;
 use Getopt::Long;
 use Pod::Usage;
+# needed as soon as possible, for model attributes interface
+# without the following line, model attributes will not work
+use XUL::Node::MVC;
 use XUL::Node::Server;
 
 my $PORT = ~~PORT~~;

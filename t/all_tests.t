@@ -1,4 +1,4 @@
-#!perl
+#!/usr/bin/perl
 
 require 5.008;
 
@@ -24,10 +24,14 @@ my @test_class_names;
 BEGIN {
 	my @ALL_TESTS = qw(
 		XUL::tests::Node
-		XUL::Node::tests::State
-		XUL::Node::tests::ChangeManager
-		XUL::Node::tests::Session
-		XUL::Node::tests::SessionManager
+		XUL::tests::CustomNodeTest
+		XUL::tests::CustomCompositeNodeTest
+		XUL::Node::Server::tests::NodeState
+		XUL::Node::Server::tests::ChangeManager
+		XUL::Node::Server::tests::Session
+		XUL::Node::Server::tests::SessionManager
+		XUL::Node::Model::tests::Value
+		XUL::Node::tests::MVC
 	);
 
 	my $thing = $ARGV[0];

@@ -3,81 +3,112 @@ package XUL::Node;
 use strict;
 use warnings;
 use Carp;
+use Scalar::Util qw(weaken);
+use Aspect::Library::Listenable;
 use XUL::Node::Constants;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
-my @XUL_ELEMENTS = qw(
-	Window Box HBox VBox Label Button TextBox TabBox Tabs TabPanels Tab TabPanel
-	Grid Columns Column Rows Row CheckBox Seperator Caption GroupBox MenuList
-	MenuPopup MenuItem ListBox ListItem Splitter Deck Spacer HTML_Pre HTML_H1
-	HTML_H2 HTML_H3 HTML_H4 HTML_A HTML_Div ColorPicker Description Image
-	ListCols ListCol ListHeader ListHead Stack RadioGroup Radio Grippy
-	ProgressMeter ArrowScrollBox ToolBox ToolBar ToolBarSeperator ToolBarButton
-	MenuBar Menu MenuSeparator StatusBarPanel StatusBar
-);
+# hash of class => keys for all custom widgets that were imported
+# this allows custom widgets to pass their constructor parameters
+# unharmed through the XUL::Node constructor DWIMer
+my %Widget_Keys = ();
 
 # creating --------------------------------------------------------------------
 
-my %XUL_ELEMENTS = map { $_ => 1 } @XUL_ELEMENTS;
-
-sub import {
-	my $class   = shift;
-	my $package = caller();
-	no strict 'refs';
-	# export factory methods for each xul element type
-	foreach my $tag (@XUL_ELEMENTS) {
-		*{"${package}::$tag"} = sub
-			{ my $scalar_context = $class->new(tag => $tag, @_) };
-	}
-	# export the xul element constants
-	foreach my $constant_name (@XUL::Node::Constants::EXPORT)
-		{ *{"${package}::$constant_name"} = *{"$constant_name"} }
-}
-
 sub new {
-	my ($class, @params) = @_;
-	my $self = bless {attributes => {}, children => [], events => {}}, $class;
-	while (my $param = shift @params) {
-		if (UNIVERSAL::isa($param, __PACKAGE__))
+	my $class = shift;
+	my $self = bless {
+		attributes   => {},
+		children     => [],
+		parent_node  => undef,
+		is_destroyed => 0,
+	}, $class;
+	my %subclass_params = ();
+	# what's in my @_?
+	while (my $param = shift @_) {
+
+		if (UNIVERSAL::isa($param, __PACKAGE__)) # a node
 			{ $self->add_child($param) }
-		elsif ($param =~ /^[a-z]/)
-			{ $self->set_attribute($param => shift @params) }
-		elsif ($param =~ /^[A-Z]/)
-			{ $self->attach($param => shift @params) }
+
+		elsif ($Widget_Keys{$class} && $Widget_Keys{$class}->{$param}) # not me
+			{ $subclass_params{$param} = $_[0]; shift }
+
+		elsif ($param =~ /^[a-z]/) # an attribute
+			# must reference @_ directly, so as not to lose the ties
+			{ $self->set_attribute($param => $_[0]); shift }
+
+		elsif ($param =~ /^[A-Z]/) # an event listener
+			{ add_listener $self, $param => shift }
+
 		else
 			{ croak "unrecognized param: [$param]" }
+
 	}
+	$self->init(%subclass_params);
+	# if tag has not been set by subclass init or in params, then we get it from
+	# the template method
+	$self->tag( $self->my_tag ) unless $self->tag;
 	return $self;
+}
+
+# template methods
+sub init    {}
+sub my_keys { () }
+sub my_tag  { 'Box' }
+sub my_name {
+	my $package = shift;
+	$package =~ /([^:]+)$/; # last part of Perl package name
+	return $1;
 }
 
 # attribute handling ----------------------------------------------------------
 
-sub attributes    { wantarray? %{shift->{attributes}}: shift->{attributes} }
-sub get_attribute { shift->attributes->{pop()} }
-sub set_attribute { $_[0]->attributes->{pop()} = pop; $_[0] }
-sub is_window     { shift->tag eq 'Window' }
+sub attributes     { wantarray? %{shift->{attributes}}: shift->{attributes} }
+sub get_attribute  { shift->attributes->{pop()} }
+# For our friends the aspects, we set attribute in 2 stages. set_attribute
+# delegates to _set_attribute, and does nothing else. 2 different aspects
+# need 2 different pointcuts:
+#  1) MVC advises set_attribute, listenable models call _set_attribute
+#  2) change manager advises _set_attribute
+# The public API is set_attribute.
+# _set_attribute exists so that we can have a 2 way binding between between
+# widget and model, yet avoid infinite event firing cycles.
+# Event calls them both when a client event is received- _set_attribute when
+# created, set_attribute when fired
+sub set_attribute  { $_[0]->_set_attribute($_[1], $_[2]) }
+sub _set_attribute { $_[0]->attributes->{pop()} = pop; $_[0] }
 
+# all unhandled calls go to g/set attribute
 sub AUTOLOAD {
 	my $self = shift;
 	my $key  = our $AUTOLOAD;
 	return if $key =~ /DESTROY$/;
 	$key =~ s/^.*:://;
-	return $key =~ /^[a-z]/?
-		@_ == 0?
-			$self->get_attribute($key):
-			$self->set_attribute($key, shift):
-		$key =~ /^[A-Z]/?
-			$self->add_child(__PACKAGE__->new(tag => $key, @_)):
-			croak __PACKAGE__. "::AUTOLOAD cannot find message called [$key]";
+	return
+		$key =~ /^[a-z]/? # property access?
+			@_ == 0? # property get?
+				$self->get_attribute($key):
+				$self->set_attribute($key, shift):
+			$key =~ /^_([a-z].*)/? # direct property access?
+				$self->_set_attribute($1, shift):
+				croak __PACKAGE__. "::AUTOLOAD: no message called [$key]";
 }
 
 # compositing -----------------------------------------------------------------
 
-sub children    { wantarray? @{shift->{children}}: shift->{children} }
-sub child_count { scalar @{shift->{children}} }
-sub first_child { shift->{children}->[0] }
-sub get_child   { shift->{children}->[pop] }
+sub children        { wantarray? @{shift->{children}}: shift->{children} }
+sub child_count     { scalar @{shift->{children}} }
+sub first_child     { shift->{children}->[0] }
+sub get_child       { shift->{children}->[pop] }
+sub get_parent_node { shift->{parent_node} }
+
+sub set_parent_node {
+	my ($self, $parent_node) = @_;
+	croak "cannot re-parent node" if $self->{parent_node} && $parent_node;
+	$self->{parent_node} = $parent_node;
+	weaken $parent_node;
+}
 
 sub add_child {
 	my ($self, $child, $index) = @_;
@@ -86,17 +117,19 @@ sub add_child {
 	croak "index out of bounds: [$index:$child_count]"
 		if ($index < 0 || $index > $child_count);
 	$self->_add_child_at_index($child, $index);
+	$child->set_parent_node($self);
 	return $child;
 }
 
 sub remove_child {
-	my ($self, $something) = @_;
+	my ($self, $something) = @_; # something is index or widget
 	my ($child, $index) = $self->_compute_child_and_index($something);
 	splice @{$self->{children}}, $index, 1;
 	$child->destroy;
 	return $self;
 }
 
+# get the index of a child in its parent
 sub get_child_index {
 	my ($self, $child) = @_;
 	my $index = 0;
@@ -121,36 +154,25 @@ sub _add_child_at_index {
 	return $child;
 }
 
-# event handling --------------------------------------------------------------
-
-sub attach { shift->{events}->{pop()} = pop }
-
-sub detach {
-	my ($self, $name) = @_;
-	my $listener = delete $self->{events}->{$name};
-	croak "no listener to detach: $name" unless $listener;
-}	
-
-sub fire_event {
-	my ($self, $event) = @_;
-	my $listener = $self->{events}->{$event->name};
-	return unless $listener;
-	$listener->($event);
+sub remove_all_children {
+	my $self = shift;
+	$self->remove_child(0) for 1..$self->child_count;
 }
 
 # destroying ------------------------------------------------------------------
 
-# protected, used by sessions and by parent nodes to free node memory 
-# event handlers could cause reference cycles, so we free them manually
+# this is here just to keep track of destruction
+# no cycles need to be broken thanx to weaken
 sub destroy {
 	my $self = shift;
 	$_->destroy for $self->children;
-	delete $self->{events};
+	$self->set_parent_node(undef);
+	$self->{is_destroyed} = 1;
 }
 
-sub is_destroyed { !shift->{events} }
-
 # testing ---------------------------------------------------------------------
+
+sub is_destroyed { shift->{is_destroyed} }
 
 sub as_xml {
 	my $self       = shift;
@@ -183,6 +205,73 @@ sub children_as_xml {
 
 sub get_indent { ' ' x (3 * pop) }
 
+# exporting -------------------------------------------------------------------
+
+use constant XUL_ELEMENTS => (qw(
+	Window Box HBox VBox Label Button TextBox TabBox Tabs TabPanels Tab TabPanel
+	Grid Columns Column Rows Row CheckBox Seperator Caption GroupBox MenuList
+	MenuPopup MenuItem ListBox ListItem Splitter Deck Spacer HTML_Pre HTML_H1
+	HTML_H2 HTML_H3 HTML_H4 HTML_A HTML_Div ColorPicker Description Image
+	ListCols ListCol ListHeader ListHead Stack RadioGroup Radio Grippy
+	ProgressMeter ArrowScrollBox ToolBox ToolBar ToolBarSeparator ToolBarButton
+	MenuBar Menu MenuSeparator StatusBarPanel StatusBar
+));
+
+# export factory methods for each xul element type, xul element constants, and
+# listenable aspect add/remove listener, also custom widgets, but we dont know
+# about these until import time
+our %EXPORT  = (
+	(map { my $name = $_; (
+		$name => sub { my $scalar_context = __PACKAGE__->new(tag => $name, @_) }
+	) } XUL_ELEMENTS),
+	(map { $_ => $_ }
+		(@XUL::Node::Constants::EXPORT, qw(add_listener remove_listener))
+	),
+);
+
+our @EXPORT = keys %EXPORT;
+
+sub import {
+	my $class   = shift;
+	my $package = caller();
+	my @widgets = @_;
+	import_item($_ => $EXPORT{$_}) for @EXPORT;
+	# import custom widgets
+	import_widgets($package, @widgets);
+	
+}
+
+sub import_widgets {
+	my ($package, @widgets) = @_;
+	import_widget($package, $_) for @widgets;
+}
+
+sub import_widget {
+	my ($package, $widget_class) = @_;
+	no strict 'refs';
+	local $_;
+	use_widget($widget_class) unless UNIVERSAL::can($widget_class, 'import');
+	my $name = $widget_class->can('my_name')?
+		$widget_class->my_name:
+		get_widget_name($widget_class);
+	*{"${package}::$name"} =
+		sub { my $scalar_context = $widget_class->new(@_) };
+	$Widget_Keys{$widget_class} = {map {$_ => 1} $widget_class->my_keys};
+}
+
+sub import_item {
+	my ($name, $func) = @_;
+	my $package = caller(1);
+	no strict 'refs';
+	*{"${package}::$name"} = ref $func eq 'CODE'? $func: *{"$func"};
+}
+
+sub use_widget {
+	my $package = pop;
+	eval "use $package";
+	croak "cannot use widget package [$package]: $@" if $@;
+}
+
 1;
 
 =head1 NAME
@@ -194,8 +283,8 @@ XUL-Node - server-side XUL for Perl
   use XUL::Node;
 
   # creating
-  $window = Window(                            # window with a header,
-     HTML_H1(textNode => 'a heading'),         # a label, and a button
+  $window = Window(                             # window with a header,
+     HTML_H1(textNode => 'a heading'),          # a label, and a button
      $label = Label(FILL, value => 'a label'),
      Button(label => 'a button'),
   );
@@ -206,22 +295,30 @@ XUL-Node - server-side XUL for Perl
   print $label->flex;
 
   # compositing
-  print $window->child_count;                  # prints 2
-  $window->Label(value => 'another label');    # add a label to window
-  $window->add_child(Label);                   # same but takes child as param
-  $button = $window->get_child(1);             # navigate the widget tree
-  $window->add_child(Label, 0);                # add a child at an index
+  print $window->child_count;                   # prints 3: H1, label, button
+  $window->add_child(Label(value =>'foo'));     # add label to thw window
+  $window->add_child(Label(value => 'bar'), 0); # add at an index, 0 is top
+  $button = $window->get_child(3);              # navigate down the widget tree
+  print $button->get_parent->child_count;       # naviate up, prints 6
+  $window->remove_child(0);                     # remove child at index
+  $foo_label = $window->get_child(3);
+  $window->remove_child($foo_label);            # remove child
+  
 
   # events
-  $window->Button(Click => sub { $label->value('clicked!') });
-  $window->MenuList(
+  $button = $window->add_child
+  	(Button(Click => sub { $label->value('clicked!') }));
+  my $sub = sub { $label->value('clicked!') }
+  add_listener $button, Click => $sub;          # add several event listeners
+  remove_listener $button, Click => $sub;
+  $window->add_child(MenuList(
      MenuPopup(map { MenuItem(label => "item #$_", ) } 1..10),
      Select => sub { $label->value(shift->selectedIndex) },
-  );
+  ));
 
   # destroying
-  $window->remove_child($button);              # remove child widget
-  $window->remove_child(1);                    # remove child by index
+  $window->remove_child($button);               # remove child widget
+  $window->remove_child(1);                     # remove child by index
 
 =head1 DESCRIPTION
 
@@ -230,19 +327,19 @@ applications. It includes a server, a UI framework, and a Javascript XUL
 client for the Firefox web browser. Perl applications run inside a POE
 server, and are displayed in a remote web browser.
 
-The goal is to provide Perl developers with the XUL/Javascript
+The goal is to provide Perl developers with the well known XUL/Javascript
 development model, but with two small differences:
 
 =over 4
 
-=item *
+=item Make it Perl friendly
 
-Make it Perl friendly
+Not one line of Javascript required. Be as Perlish as possible.
 
-=item *
+=item Make it Remote
 
-Allow users to run the application on remote servers, so clients only
-require Firefox, while the Perl code runs on the server
+Allow users to run the application on remote servers. Client
+requirements: Firefox. Server requirements: Perl.
 
 =back
 
@@ -257,7 +354,7 @@ Firefox with no special security permissions, built in 100% pure Perl.
 =head1 DEVELOPER GUIDE
 
 Programming in XUL-Node feels very much like working in a desktop UI
-framework such as PerkTk or WxPerl. You create widgets, arrange them in a
+framework such as PerlTk or WxPerl. You create widgets, arrange them in a
 composition tree, configure their attributes, and listen to their events.
 
 Web development related concerns are pushed from user code into the
@@ -280,12 +377,12 @@ We start with the customary Hello World:
   use XUL::Node;
   use base 'XUL::Node::Application';
 
-  sub start { Window(Label(value => 'Hello World!')) }
+  sub start { Window Label value => 'Hello World!' }
 
   1;
 
-This is an application package, which creates a window with a label as
-its single child.
+This is an application class. It creates a window with a label as its
+only child. The label value is set to 'Hello World!'.
 
 =head2 Applications
 
@@ -309,8 +406,8 @@ Implement one template method, C<start()>.
 =back
 
 In C<start()> you must create at least one window, if you want the UI to
-show. The method is run once per application per session. This is where
-you create widgets and attach event listeners.
+show. The method is run once, when a session begins. This is where you
+create widgets and add event listeners.
 
 XUL-Node comes with 14 example applications in the
 C<XUL::Node::Application> namespace.
@@ -351,26 +448,24 @@ examples. By default it will be available at:
 =head2 Widgets
 
 To create a UI, you will want your C<start()> method to create a window
-with some widgets in it. Widgets are created by calling a function or
-method named after their tag:
+with some widgets in it. Widgets are created by calling a function named
+after their tag:
 
   $button = Button;                           # orphan button with no label
-  $box->Button;                               # another, but added to a box
-  $widget = XUL::Node->new(tag_name => $tag); # using dynamic tag
+  $widget = XUL::Node->new(tag_name => $tag); # another orphan, more verbose
 
 After creating a widget, you must add it to a parent. The widget will
 show when there is a containment path between it and a window. There are
-3 ways to parent widgets:
+two ways to parent widgets:
 
   $parent->add_child($button);                # using add_child
-  $parent->Button(label => 'hi!');            # create and add in one shot
-  Box(style => 'color:red', $label);          # add in parent constructor
+  Box(style => 'color:red', Button);          # add in parent constructor
 
 Widgets have attributes. These can be set in the constructor, or via
 get/set methods:
 
-  $button->value('a button');
-  print $button->value;                       # prints 'a button'
+  $button->label('a button');
+  print $button->label;                       # prints 'a button'
 
 Widget can be removed from the document by calling the C<remove_child()>
 method on their parent. The only parameter is a widget, or an index of a
@@ -405,23 +500,37 @@ an explanation of available widget attributes.
 =head2 Events
 
 Widgets receive events from their client halves, and pass them on to
-attached listeners in the application. You attach a listener to a widget
+attached listeners in the application. You add a listener to a widget
 so:
 
   # listening to existing widget
-  $button->attach(Change => sub { print 'clicked!' });
+  add_listener $button, Click => sub { print 'clicked!' };
 
   # listening to widget in constructor
   TextBox(Change => sub { print shift->value });
 
-You attach events by providing an event name and a listener. Possible
-event names are C<Click>, C<Change>, C<Select>, and C<Pick>. Different
-widgets fire different events. These are listed in L<XUL::Node::Event>.
+You add events by providing an event name and a listener. Possible event
+names are C<Click>, C<Change>, C<Select>, and C<Pick>. Different widgets
+fire different events. These are listed in L<XUL::Node::Event>.
 
-Listener are callbacks that receive a single argument: the event object
-(L<XUL::Node::Event>). You can query this object for information about the
-event: C<name>, C<source>, and depending on the event type: C<checked>,
-C<value>, C<color>, and C<selectedIndex>.
+Widgets can have any number of registered listeners. They can be removed
+using C<remove_listener>. A listener can be a C<CODE> ref, or a method on
+some object.
+
+  # call MyListener::handle_event_Click as a method
+  add_listener $button, Click => MyListener->new; 
+
+  # call MyListener::my_handler as a method
+  add_listener $button, Click => [my_handler => MyListener->new];
+
+See L<Aspect::Library::Listenable|ADDING AND REMOVING LISTENERS> for more
+information about writing listeners.
+
+Listener receive a single argument: the event object. You can query this
+object for information about the event: C<name>, C<source>, and depending
+on the event type: C<checked>, C<value>, C<color>, and C<selectedIndex>.
+
+See L<XUL::Node::Server::Event> for more information about event types.
 
 Here is an example of listening to the C<Select> event of a list box:
 
@@ -481,6 +590,10 @@ are all attributes.
 
 There exist constants for common attribute key/value pairs. See
 C<XUL::Node::Constants>.
+
+=item *
+
+Works around Firefox XUL bugs.
 
 =back
 
@@ -569,26 +682,55 @@ Running commands as they are received from the server.
 Unifying attributes/properties/methods, so they all seem like attributes
 to the XUL-Node developer.
 
+=item *
+
+Work-arounds for Firefox bugs and inconsistencies.
+
 =back
-
-=head1 SUPPORTED WIDGETS
-
-  Box, HBox, VBox, Label, Button, TextBox, TabBox, Grid, CheckBox,
-  GroupBox, MenuList, ListBox, Splitter, Deck, Spacer, HTML_Pre,
-  HTML_H1-4, HTML_A, HTML_Div, ColorPicker, Description, Image, Stack,
-  Radio, ProgressMeter, ArrowScrollBox, ToolBox, ToolBar,
-  ToolBarSeperator, MenuBar, Menu, StatusBar.
 
 =head1 SUPPORTED TAGS
 
-  Window, Box, HBox, VBox, Label, Button, TextBox, TabBox, Tabs,
-  TabPanels, Tab, TabPanel Grid, Columns, Column, Rows, Row, CheckBox,
-  Seperator, Caption, GroupBox, MenuList MenuPopup, MenuItem, ListBox,
-  ListItem, Splitter, Deck, Spacer, HTML_Pre, HTML_H1 HTML_H2, HTML_H3,
-  HTML_H4, HTML_A, HTML_Div, ColorPicker, Description, Image ListCols,
-  ListCol, ListHeader, ListHead, Stack, RadioGroup, Radio, Grippy
-  ProgressMeter, ArrowScrollBox, ToolBox, ToolBar, ToolBarSeperator,
-  ToolBarButton MenuBar, Menu, MenuSeparator, StatusBarPanel, StatusBar.
+These XUL tags have been tested and are known to work.
+
+=over 4
+
+=item containers
+
+Window, Box, HBox, VBox, GroupBox, Grid, Columns, Column, Rows, Row,
+Deck, Stack, ArrowScrollBox
+
+=item labels
+
+Label, Image, Caption, Description
+
+=item Simple Controls
+
+Button, TextBox, CheckBox, Seperator, Caption, RadioGroup, Radio,
+ProgressMeter, ColorPicker
+
+=item lists
+
+ListBox, ListCols, ListCol, ListHeader, ListHead, ListItem
+
+=item notebook parts
+
+TabBox, Tabs, TabPanels, Tab, TabPanel
+
+=item menus, status bars and toolbars
+
+MenuBar, Menu, MenuSeparator, MenuList, MenuPopup, MenuItem, ToolBox,
+ToolBar, ToolBarButton, ToolBarSeperator, StatusBarPanel, StatusBar,
+Grippy
+
+=item layout
+
+Spacer, Splitter
+
+=item HTML elements
+
+HTML_Pre, HTML_A, HTML_Div, HTML_H1, HTML_H2, HTML_H3, HTML_H4
+
+=back
 
 =head1 LIMITATIONS
 
@@ -603,10 +745,7 @@ Some widgets are not supported yet: tree, popup, and multiple windows
 Some widget features are not supported yet:
 
   * multiple selections
-  * node disposal
   * color picker will not fire events if type is set to button
-  * equalsize attribute will not work
-  * menus with no popups may not show
 
 =back
 

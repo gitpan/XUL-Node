@@ -10,20 +10,12 @@ Starting XUL-Node installation.
 
 MESSAGE
 
-my $NAME               = 'XUL::Node';
-my $SERVER_SCRIPT_NAME = 'xul-node-server';
-my $SERVER_ROOT_DIR    = 'xul-node';
-my $SERVER_XUL_DIR     = "$SERVER_ROOT_DIR/xul";
-my $SERVER_JS_DIR      = "$SERVER_XUL_DIR/jslib";
-my $SERVER_JSLIB       = "$SERVER_XUL_DIR/NS6lib.js";
-my $BLIB_SERVER_ROOT   = "blib/$SERVER_ROOT_DIR";
-my $BLIB_SERVER_XUL    = "blib/$SERVER_XUL_DIR";
-my $BLIB_SERVER_JS     = "blib/$SERVER_JS_DIR";
-my $BLIB_SERVER_JSLIB  = "blib/$SERVER_JSLIB";
-my $MODULE             = 'lib/XUL/Node.pm';
-my $SERVER_SCRIPT      = "bin/$SERVER_SCRIPT_NAME";
-my $JS_BUILD_SCRIPT    = 'bin/js-build';
-my $BLIB_TESTS_XUL     = "$BLIB_SERVER_XUL/tests.xul";
+my $NAME                 = 'XUL::Node';
+my $MODULE               = 'lib/XUL/Node.pm';
+my $SERVER_ROOT_DIR      = 'xul-node';
+my $BLIB_SERVER_ROOT_DIR = "blib/$SERVER_ROOT_DIR";
+my $SERVER_SCRIPT_NAME   = 'xul-node-server';
+my $SERVER_SCRIPT        = "bin/$SERVER_SCRIPT_NAME";
 
 my $PORT = prompt("\nEnter port for $SERVER_SCRIPT_NAME:\n", 8077);
 my $INSTALL_DIR = prompt(
@@ -32,6 +24,7 @@ my $INSTALL_DIR = prompt(
 		"C:/perl/$SERVER_ROOT_DIR":
 		"/usr/local/$SERVER_ROOT_DIR"
 );
+print "\n=> Writing Makefile... (look here for missing requirements)\n";
 
 WriteMakefile(
 	NAME          => $NAME,
@@ -43,18 +36,18 @@ WriteMakefile(
 	EXE_FILES     => [$SERVER_SCRIPT],
 	clean         => {FILES => "$SERVER_SCRIPT"},
 	PREREQ_PM     => {
-		'Aspect'                             => '0.11',
+		'XML::Parser'                        => '2.34',
 		'Digest::MD5'                        => '2.3',
+		'Scalar::Util'                       => '1.13',
 		'LWP'                                => '5.75',
 		'MIME::Types'                        => '1.13',
 		'POE'                                => '0.2802',
 		'POE::Component::Server::HTTPServer' => '0.9',
-		'Scalar::Util'                       => '1.13',
-		'Test::Class'                        => '0.03',
-		'Test::Exception'                    => '0.15',
-		'XML::Parser'                        => '2.34',
+		'Aspect'                             => '0.12',
 	},
 );
+
+print "=> Done with writing Makefile.\n";
 
 print <<FINAL_MESSAGE;
 
@@ -75,15 +68,11 @@ package MY;
 sub postamble {qq[
 build_server :: pm_to_blib
 	\@\$(ECHO) "building server root directory in blib..."
-	\@\$(PERL) $JS_BUILD_SCRIPT
-	\@\$(MOD_INSTALL) $SERVER_XUL_DIR $BLIB_SERVER_XUL
-	\@\$(RM_RF) $BLIB_SERVER_JS
-	\@\$(RM_F) $SERVER_JSLIB
-	\@\$(RM_F) $BLIB_TESTS_XUL
+	\@\$(MOD_INSTALL) $SERVER_ROOT_DIR $BLIB_SERVER_ROOT_DIR
 
 install_server :: build_server
 	\@\$(ECHO) "installing server root directory from blib to $INSTALL_DIR..."
-	\@\$(MOD_INSTALL) $BLIB_SERVER_ROOT $INSTALL_DIR
+	\@\$(MOD_INSTALL) $BLIB_SERVER_ROOT_DIR $INSTALL_DIR
 	\@\$(RM_F) $SERVER_SCRIPT
 ]}
 

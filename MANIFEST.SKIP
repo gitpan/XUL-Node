@@ -3,6 +3,9 @@ CVS/.*
 \.old$
 \.tar$
 \.tgz$
+\.tmp$
+\.pmc$
+\.log$
 \.tar\.gz$
 ^tmp/
 ^blib/

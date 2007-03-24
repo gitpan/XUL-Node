@@ -9,18 +9,18 @@ use constant {
 	EXEC_PACKAGE => 'XUL::Node::Application',
 };
 
-sub get_constructor {
+sub create {
 	my $self = shift;
 	my $package = application_to_package(shift);
 	runtime_use($package);
-	return sub { $package->new->start };
+	return $package->new;
 }
 
 sub new { bless {}, shift }
 
 sub application_to_package {
 	my $name = pop || DEFAULT_NAME;
-	# remove following line- get big security hole
+	# want to remove the following line? say hello to one big security hole
 	croak "illegal name: [$name]" unless $name =~ /^[A-Z](?:\w*::)*\w+$/;
 	$name = EXEC_PACKAGE. "::$name";
 }
@@ -50,9 +50,9 @@ XUL::Node::Application - base class for XUL-Node applications
   use base 'XUL::Node::Application';
   sub start { Window(Label(value => 'Welcome to MyApp')) }
 
-  # running the application from some handler in a server
+  # running the application from some handler in some server
   use XUL::Node::Application;
-  XUL::Node::Application->get_constructor('MyApp')->();
+  XUL::Node::Application->create('MyApp')->start;
 
   # Firefox URL
   http://SERVER:PORT/start.xul?MyApp
@@ -63,8 +63,9 @@ To create a XUL-Node application, subclass from this class and provide
 one template method: C<start()>. It will be called when the application
 is started.
 
-You can get a callback for running the application by calling the class
-method C<get_constructor()>, which returns a C<CODE> ref that can be run
-to start the application. This is how the session starts applications.
+C<XUL::Node::Server::Session> starts applications by calling the class method
+C<create($application_name)>, then creating a closure which calls C<start()>
+on the application object. The closure is run by the change manager, which
+collects any changes to nodes so they can be passed to the client.
 
 =cut

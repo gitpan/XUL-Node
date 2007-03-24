@@ -16,7 +16,7 @@ sub get_demo_box {
 			ToolBox(
 				ToolBar(
 					Label(value => 'This is a toolbar:'),
-					ToolBarSeperator,
+					ToolBarSeparator,
 					ToolBarButton(
 						label     => 'Button',
 						accesskey => 'B',
@@ -29,14 +29,14 @@ sub get_demo_box {
 				),
 				ToolBar(
 					Label(value => 'This is another toolbar:'),
-					ToolBarSeperator,
+					ToolBarSeparator,
 					ToolBarButton(TYPE_RADIO, label => 'Radio1', name => 'radio'),
 					ToolBarButton(TYPE_RADIO, label => 'Radio2', name => 'radio'),
 					ToolBarButton(TYPE_RADIO, label => 'Radio3', name => 'radio'),
 				),
 				MenuBar(
 					Label(value => 'This is a menubar'),
-					ToolBarSeperator,
+					ToolBarSeparator,
 					Menu(label => 'Radio', accesskey => 'R',
 						MenuPopup(
 							MenuItem(TYPE_RADIO, label => 'Radio1', name => 'radio'),

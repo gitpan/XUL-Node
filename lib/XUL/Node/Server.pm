@@ -10,7 +10,7 @@ use POE qw(
 	Component::Server::HTTPServer
 	Component::Server::HTTPServer::Handler
 );
-use XUL::Node::SessionManager;
+use XUL::Node::Server::SessionManager;
 use XUL::Node::Server::SessionTimer;
 use XUL::Node::Server::ViewSourceHandler;
 
@@ -23,9 +23,9 @@ use constant HTTP_SERVER_ID => 'XUL-Node POE server';
 sub start {
 	my ($port, $server_root) = @_;
 
-	my $self  = bless {
-		session_manager => XUL::Node::SessionManager->new
-	}, __PACKAGE__;
+	my $self  = bless
+		{ session_manager => XUL::Node::Server::SessionManager->new },
+		__PACKAGE__;
 
 	$self->create_http_server_component($port, $server_root);
 	$self->{session_timer} = XUL::Node::Server::SessionTimer->new
@@ -76,16 +76,17 @@ sub handle {
 	my $response = $context->{response};
 	my ($content, $code, %request);
 	eval {
-		%request    = $self->get_request_as_hash($request);
-		my $is_boot = !$request{session};
-		$content    = $self->{session_manager}->handle_request(\%request);
-		$code       = RC_OK;
+		%request = $self->get_request_as_hash($request);
+#use Data::Dumper;print Dumper {%request};
+		$content = $self->{session_manager}->handle_request(\%request);
+		$code    = RC_OK;
 		$self->{session_timer}->user_session_keep_alive($request{session});
+#print "\n............................\nRESPONSE\n$content\n-------------------------------\n";
 	};
 	if ($@) {
 		$content = $self->get_error_message($@, %request);
 		$code    = RC_INTERNAL_SERVER_ERROR;
-#		print STDERR "Server error:\n". $content;
+print STDERR "# Server error:\n". $content;
 	}
 	$self->config_response($response, $content, $code);
 	return H_FINAL;

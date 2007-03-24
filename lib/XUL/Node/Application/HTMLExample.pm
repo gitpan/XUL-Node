@@ -16,7 +16,7 @@ sub start {
 		HTML_Pre(textNode => "1st line of <pre> element.\nSecond line."),
 		# for some reason mozilla only shows links if inside some HTML element
 		HTML_Div(HTML_A(
-			textNode => 'An <href> to http://www.mozilla.org, in new window',
+			textNode => 'An <href> to http://www.mozilla.org, in this window',
 			href     => 'http://www.mozilla.org',
 			target   => 'new_browser',
 		)),

@@ -98,7 +98,7 @@ sub get_demo_box {
 							my $event = shift;
 							$labels->{menu}->value(
 								$event->source->first_child->
-								get_child(event->selectedIndex)->label
+								get_child($event->selectedIndex)->label
 							);
 						},
 					),
@@ -113,7 +113,7 @@ sub get_demo_box {
 							my $event = shift;
 							$labels->{menu}->value(
 								$event->source->first_child->
-								get_child(event->selectedIndex)->label
+								get_child($event->selectedIndex)->label
 							);
 						},
 						Click => sub

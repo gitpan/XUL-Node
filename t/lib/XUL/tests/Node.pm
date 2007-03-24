@@ -4,13 +4,15 @@ use strict;
 use warnings;
 use Carp;
 use Test::More;
+use Test::Exception;
 use XUL::tests::Assert;
-use XUL::Node;
-use XUL::Node::Event;
+use XUL::Node;# qw(XUL::tests::CustomNode);
 
 use base 'Test::Class';
 
 sub subject_class { 'XUL::Node' }
+
+# attributes ------------------------------------------------------------------
 
 sub set_attribute: Test {
 	my ($self, $subject) = @_;
@@ -18,12 +20,43 @@ sub set_attribute: Test {
 	is $subject->get_attribute('tag'), 'Label';
 }
 
+sub set_attribute_direct: Test {
+	my ($self, $subject) = @_;
+	$subject->_set_attribute(tag => 'Label');
+	is $subject->get_attribute('tag'), 'Label';
+}
+
+sub set_attribute_autoload: Test {
+	my ($self, $subject) = @_;
+	$subject->tag('Label');
+	is $subject->tag, 'Label';
+}
+
+sub set_attribute_direct_autoload: Test {
+	my ($self, $subject) = @_;
+	$subject->_tag('Label');
+	is $subject->tag, 'Label';
+}
+
+sub unknown_autoload: Test {
+	my ($self, $subject) = @_;
+	throws_ok { $subject->_ILLEGAL } qr/no message called \[_ILLEGAL\]/;
+}
+
+# composition -----------------------------------------------------------------
+
 sub add_child: Test {
 	my ($self, $subject) = @_;
 	$subject->set_attribute(tag => 'Box');
 	my $child = $self->make_subject(tag => 'Label');
 	$subject->add_child($child);
 	is_deeply [$subject->children], [$child];
+}
+
+sub set_parent_node: Test {
+	my ($self, $subject) = @_;
+	my $child = $subject->add_child(Label);
+	is $child->get_parent_node, $subject;
 }
 
 sub add_child_at_index: Test {
@@ -49,7 +82,7 @@ sub create_with_children: Test {
 sub create_on_parent: Test {
 	my ($self, $subject) = @_;
 	$subject->tag('Box');
-	$subject->Label(value => 'bar');
+	$subject->add_child(Label value => 'bar');
 	is_xul_xml $subject, <<AS_XML;
 <Box>
    <Label value="bar"/>
@@ -78,28 +111,9 @@ sub create_with_nice_api: Test {
 AS_XML
 }
 
-sub attach: Test {
-	my ($self, $subject) = @_;
-	my $listener_called = 0;
-	$subject->attach(Click => sub { $listener_called = shift->source });
-	$subject->fire_event
-		(XUL::Node::Event->new({name => 'Click', source => $subject}));
-	is $listener_called, $subject;
-}
-
-sub detach: Test {
-	my ($self, $subject) = @_;
-	my $listener_called = 0;
-	$subject->attach(Click => sub { $listener_called = shift->source });
-	$subject->detach('Click');
-	$subject->fire_event
-		(XUL::Node::Event->new({name => 'Click', source => $subject}));
-	is $listener_called, 0;
-}
-
 sub destroy: Test(4) {
 	my ($self, $subject) = @_;
-	my $child = $subject->Label;
+	$subject->add_child(my $child = Label);
 	ok !$subject->is_destroyed, 'subject exists';
 	ok !$child->is_destroyed, 'child exists';
 	$subject->destroy;
@@ -109,10 +123,17 @@ sub destroy: Test(4) {
 
 sub remove_child: Test(2) {
 	my ($self, $subject) = @_;
-	my $child = $subject->Label;
+	$subject->add_child(my $child = Label);
 	$subject->remove_child($child);
 	is $subject->child_count, 0, 'child count decreased';
 	ok $child->is_destroyed, 'child removed';
+}
+
+sub remove_all_children: Test {
+	my ($self, $subject) = @_;
+	$subject->add_child(Label) for 1..3;
+	$subject->remove_all_children;
+	is $subject->child_count, 0;
 }
 
 1;

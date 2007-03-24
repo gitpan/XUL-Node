@@ -8,7 +8,7 @@ SYNOPSIS
    use XUL::Node;
    use base 'XUL::Node::Application';
 
-   sub start { Window(Label(value => 'Hello World!')) }
+   sub start { Window Label value => 'Hello World!' }
 
    1;
 
@@ -24,7 +24,7 @@ DESCRIPTION
 FEATURES
 
    * Develop user interfaces as you would using frameworks such as Tk or
-     WxPerl, then deploy to Firefox web clients with no special security
+     WxPerl, but deploy to Firefox web clients with no special security
      permissions or downloads
    * Support for almost all of the XUL, see TODO for unsupported features
    * Client-server communication is done through HTTP
@@ -32,13 +32,14 @@ FEATURES
    * Almost a 1-1 correspondence with the XUL DOM API, with minimal Perl
      syntactic sugar- if you you know XUL, and you know Perl, you can
      program in XUL-Node
-   * 14 examples, including the XUL Periodic Table of Elements,
+   * 18 examples, including the XUL Periodic Table of Elements,
      demonstrating the usage of every widget, attribute, and event
    * Unicode and BiDi support
+   * Lots of unit tests, very high coverage
 
 PREREQUISITES
 
-   XUL-Node requires Perl 5.8.2, Firefox 0.8 or 0.9, and the following
+   XUL-Node requires Perl 5.8.2, Firefox 2.0, and the following
    modules, which can be obtained from CPAN:
 
      Scalar::Util
@@ -47,8 +48,6 @@ PREREQUISITES
      POE
      POE::Component::Server::HTTPServer
      Digest::MD5
-     Test::Class
-     Test::Exception
      Aspect
 
    If you install XUL-Node from the CPAN shell, these modules will, if
@@ -73,7 +72,7 @@ INSTALLATION
     just accept the defaults.
 
     Several Perl modules, one script (the XUL-Node server), and a server
-    root directory (to be shared by the server) will be installed.
+    root directory (to be served by the web server) will be installed.
 
     You can then run the server using the command:
 
@@ -94,7 +93,7 @@ AUTHOR
 
 COPYRIGHT
 
-   Copyright 2003-2004 Ran Eilam. All rights reserved.
+   Copyright 2003-2005 Ran Eilam. All rights reserved.
 
    This library is free software; you can redistribute it and/or modify
    it under the same terms as Perl itself.

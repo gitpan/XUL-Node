@@ -48,7 +48,7 @@ use constant TYPE_RADIO        => (type => 'radio');
 use constant TYPE_MENU         => (type => 'menu');
 use constant TYPE_MENU_BUTTON  => (type => 'menu-button');
 use constant TYPE_BUTTON       => (type => 'button');
-use constant TYPE_PASSWORD     => (type => 'PASSWORD');
+use constant TYPE_PASSWORD     => (type => 'password');
 
 use constant FILL              => (ALIGN_STRETCH, FLEX);
 
